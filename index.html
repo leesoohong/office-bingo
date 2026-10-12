@@ -1,0 +1,540 @@
+<!doctype html>
+<html lang="ko">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
+<title>야유회 퀴즈 빙고</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Jua&family=IBM+Plex+Sans+KR:wght@400;500;700&family=IBM+Plex+Mono:wght@500&display=swap">
+<style>
+:root{
+  --bg:#f3f1e4; --surface:#fffdf4; --ink:#1f2a1c; --muted:#5f6a55; --line:#d9d4bd;
+  --pine:#2f5d3a; --pine-ink:#ffffff; --tomato:#d6452f; --mustard:#e8b43a; --mustard-soft:#f7e6b5;
+  --ok:#2f7d4a; --bad:#c23b2a; --check:rgba(214,69,47,.10);
+  --f-display:"Jua","IBM Plex Sans KR",system-ui,sans-serif;
+  --f-body:"IBM Plex Sans KR",system-ui,-apple-system,"Apple SD Gothic Neo",sans-serif;
+  --f-mono:"IBM Plex Mono",ui-monospace,monospace;
+  color-scheme:light;
+}
+@media (prefers-color-scheme:dark){:root{
+  --bg:#141a13; --surface:#1d251b; --ink:#eef0e2; --muted:#a3ad97; --line:#36412f;
+  --pine:#5f9e6b; --pine-ink:#0f150e; --tomato:#e05a43; --mustard:#e8b43a; --mustard-soft:#3a3320;
+  --ok:#6cc58a; --bad:#ff7a66; --check:rgba(239,106,82,.12); color-scheme:dark}}
+*{box-sizing:border-box}
+[hidden]{display:none!important}
+html,body{margin:0}
+body{background:var(--bg);color:var(--ink);font-family:var(--f-body);font-size:15px;line-height:1.55;
+  padding-inline:16px;padding-block:calc(16px + env(safe-area-inset-top,0px)) calc(40px + env(safe-area-inset-bottom,0px))}
+.wrap{max-width:560px;margin:0 auto;display:flex;flex-direction:column;gap:16px}
+.wrap.wide{max-width:1000px}
+header.top{display:flex;align-items:center;justify-content:space-between;gap:12px;flex-wrap:wrap}
+h1{font-family:var(--f-display);font-weight:400;font-size:30px;line-height:1.1;margin:0;text-wrap:balance}
+h2{font-family:var(--f-display);font-weight:400;font-size:21px;margin:0}
+.eyebrow{font-size:12px;letter-spacing:.08em;color:var(--muted)}
+.muted{color:var(--muted)}
+.small{font-size:13px}
+.panel{background:var(--surface);border:1px solid var(--line);border-radius:14px;padding:16px;display:flex;flex-direction:column;gap:12px;min-width:0}
+button{font:inherit;cursor:pointer;border-radius:10px;border:1px solid var(--line);background:var(--surface);color:var(--ink);padding:10px 14px}
+button:focus-visible,input:focus-visible,select:focus-visible,textarea:focus-visible{outline:3px solid var(--mustard);outline-offset:2px}
+button.primary{background:var(--pine);color:var(--pine-ink);border-color:var(--pine);font-weight:700}
+button.danger{color:var(--bad);border-color:var(--bad)}
+button.ghost{background:transparent}
+button:disabled{opacity:.45;cursor:not-allowed}
+input,select,textarea{font:inherit;color:var(--ink);background:var(--bg);border:1px solid var(--line);border-radius:10px;padding:10px 12px;width:100%}
+.row{display:flex;gap:8px;flex-wrap:wrap;align-items:center}
+.notice{padding:12px 14px;border-radius:12px;background:var(--mustard-soft);border:1px solid var(--mustard)}
+.code-in{font-family:var(--f-mono);font-size:24px;letter-spacing:.3em;text-align:center}
+
+/* board: picnic blanket */
+.board-frame{padding:8px;border-radius:16px;border:1px solid var(--line);background:
+  repeating-linear-gradient(0deg,var(--check) 0 14px,transparent 14px 28px),
+  repeating-linear-gradient(90deg,var(--check) 0 14px,transparent 14px 28px),var(--surface)}
+.board{display:grid;grid-template-columns:repeat(4,minmax(0,1fr));gap:6px}
+.cell{min-height:104px;border-radius:12px;border:2px solid var(--line);background:var(--surface);color:var(--ink);
+  display:flex;flex-direction:column;align-items:stretch;justify-content:flex-start;gap:4px;padding:6px;text-align:left;min-width:0}
+.cell .head{display:flex;justify-content:space-between;align-items:center;gap:4px}
+.cell .n{font-family:var(--f-display);font-size:18px;line-height:1}
+.cell .t{font-size:10px;padding:1px 5px;border-radius:99px;border:1px solid var(--line);color:var(--muted);white-space:nowrap}
+.cell .q{font-size:11.5px;line-height:1.35;display:-webkit-box;-webkit-line-clamp:4;-webkit-box-orient:vertical;overflow:hidden;word-break:keep-all;overflow-wrap:anywhere}
+.cell .a{margin-top:auto;font-family:var(--f-display);font-size:15px;line-height:1}
+.cell.done{background:var(--tomato);border-color:var(--tomato);color:#fff}
+.cell.done .t{color:#fff;border-color:rgba(255,255,255,.6)}
+.cell.inline{box-shadow:0 0 0 3px var(--mustard)}
+@media (min-width:560px){.cell{min-height:120px;padding:8px}.cell .q{font-size:13px}}
+.meter{display:flex;align-items:center;justify-content:space-between;gap:8px;flex-wrap:wrap}
+.pips{display:flex;gap:6px}
+.pip{width:26px;height:26px;border-radius:50%;border:2px solid var(--tomato);display:grid;place-items:center;font-family:var(--f-display);color:var(--tomato)}
+.pip.on{background:var(--tomato);color:#fff}
+.result{padding:14px;border-radius:12px;font-weight:500}
+.result.ok{background:color-mix(in srgb,var(--ok) 14%,var(--surface));border:1px solid var(--ok)}
+.result.bad{background:color-mix(in srgb,var(--bad) 12%,var(--surface));border:1px solid var(--bad)}
+.result.wait{background:var(--mustard-soft);border:1px solid var(--mustard)}
+.result big{font-family:var(--f-display);font-size:26px;font-weight:400;display:block}
+
+/* bottom sheet */
+.sheet-back{position:fixed;inset:0;background:rgba(10,14,9,.45);display:flex;align-items:flex-end;justify-content:center;z-index:10}
+.sheet{background:var(--surface);width:100%;max-width:560px;border-radius:18px 18px 0 0;padding:20px 16px calc(20px + env(safe-area-inset-bottom,0px));display:flex;flex-direction:column;gap:14px;max-height:85%;overflow:auto}
+.qtext{font-size:18px;font-weight:700;line-height:1.45}
+.opts{display:flex;flex-direction:column;gap:8px}
+.opts.ox{flex-direction:row}
+.opt{text-align:left;padding:14px;border-width:2px}
+.opts.ox .opt{flex:1;text-align:center;font-family:var(--f-display);font-size:34px;padding:16px}
+.opt.sel{border-color:var(--tomato);background:color-mix(in srgb,var(--tomato) 10%,var(--surface))}
+
+/* host */
+.host-grid{display:grid;grid-template-columns:1fr 1fr;gap:16px;align-items:start}
+@media (max-width:760px){.host-grid{grid-template-columns:1fr}}
+.tabs{display:flex;gap:6px;flex-wrap:wrap}
+.tabs button[aria-selected="true"]{background:var(--ink);color:var(--bg);border-color:var(--ink)}
+.bigcode{font-family:var(--f-mono);font-size:28px;letter-spacing:.2em}
+table{width:100%;border-collapse:collapse;font-variant-numeric:tabular-nums}
+th,td{text-align:left;padding:8px 6px;border-bottom:1px solid var(--line);vertical-align:middle}
+th{font-size:12px;color:var(--muted);font-weight:500}
+.rank{font-family:var(--f-display);font-size:20px;width:44px}
+.rank.r1{color:var(--mustard)}
+.mono{font-family:var(--f-mono);font-size:13px}
+.chip{display:inline-block;font-size:12px;padding:2px 8px;border-radius:99px;border:1px solid var(--line);white-space:nowrap}
+.chip.bad{color:var(--bad);border-color:var(--bad)}
+.chip.ok{color:var(--ok);border-color:var(--ok)}
+.chip.wait{background:var(--mustard-soft);border-color:var(--mustard)}
+.scroll{overflow-x:auto}
+.qedit{display:grid;gap:8px;padding:12px;border:1px solid var(--line);border-radius:12px}
+.qedit .head{display:flex;gap:8px;align-items:center}
+.qedit .head .num{font-family:var(--f-display);font-size:20px;width:30px}
+.qedit .head select{width:auto}
+.optgrid{display:grid;grid-template-columns:1fr 1fr;gap:6px}
+@media (max-width:420px){.optgrid{grid-template-columns:1fr}}
+.stats{display:flex;gap:20px;flex-wrap:wrap}
+.stat b{font-family:var(--f-display);font-weight:400;font-size:28px;display:block;line-height:1;font-variant-numeric:tabular-nums}
+.stat span{font-size:12px;color:var(--muted)}
+.qr{background:#fff;padding:12px;border-radius:12px;align-self:flex-start}
+.linkbox{font-family:var(--f-mono);font-size:13px;word-break:break-all;padding:10px;border:1px dashed var(--line);border-radius:10px;user-select:all}
+.gamelist{display:flex;flex-direction:column;gap:6px}
+.toast{position:fixed;left:50%;transform:translateX(-50%);bottom:calc(20px + env(safe-area-inset-bottom,0px));background:var(--ink);color:var(--bg);padding:10px 16px;border-radius:99px;z-index:20;max-width:90vw}
+@media (prefers-reduced-motion:no-preference){.cell{transition:background .15s,transform .1s}.cell:active{transform:scale(.96)}}
+</style>
+</head>
+<body>
+<div class="wrap" id="app">
+  <header class="top">
+    <div>
+      <div class="eyebrow" id="eyebrow">4×4 퀴즈 빙고 · 3줄 완성</div>
+      <h1 id="gameTitle">야유회 퀴즈 빙고</h1>
+    </div>
+    <button id="homeBtn" class="ghost" hidden>처음으로</button>
+  </header>
+
+  <div id="vMsg" class="notice" hidden></div>
+  <div id="vLoading" class="panel"><div class="muted">불러오는 중이에요…</div></div>
+
+  <!-- landing -->
+  <section id="vLanding" hidden style="display:flex;flex-direction:column;gap:16px">
+    <div class="panel">
+      <h2>참가하기</h2>
+      <form id="codeForm" class="row">
+        <input id="codeInput" class="code-in" inputmode="numeric" maxlength="4" placeholder="0000" aria-label="게임 코드 4자리" style="flex:1;min-width:0">
+        <button class="primary" type="submit">입장</button>
+      </form>
+      <div class="muted small">진행자가 알려준 4자리 코드를 입력하거나, 받은 링크/QR로 바로 들어오세요.</div>
+    </div>
+    <div class="panel">
+      <h2>진행자</h2>
+      <button id="createBtn" class="primary">새 게임 만들기</button>
+      <div id="myGamesWrap" hidden>
+        <div class="muted small" style="margin-bottom:6px">이 기기에서 만든 게임</div>
+        <div class="gamelist" id="myGames"></div>
+      </div>
+    </div>
+  </section>
+
+  <!-- join -->
+  <section id="vJoin" class="panel" hidden>
+    <h2>이름을 정해 주세요</h2>
+    <p class="muted" style="margin:0">순위표에 이 이름으로 표시돼요.</p>
+    <form id="joinForm" class="row">
+      <input id="nameInput" maxlength="16" placeholder="예: 마케팅팀 김지수" autocomplete="off" style="flex:1;min-width:0">
+      <button class="primary" type="submit">입장</button>
+    </form>
+    <div class="muted small">규칙: 칸을 눌러 문제를 풀고, 푼 칸으로 빙고 3줄을 만들면 제출할 수 있어요. 푼 문제가 모두 맞아야 통과예요.</div>
+  </section>
+
+  <!-- play -->
+  <section id="vPlay" hidden style="display:flex;flex-direction:column;gap:14px">
+    <div class="meter">
+      <div><span class="muted">참가자</span> <b id="meName"></b></div>
+      <div class="pips" aria-label="빙고 줄 수"><div class="pip">1</div><div class="pip">2</div><div class="pip">3</div></div>
+    </div>
+    <div class="board-frame"><div class="board" id="board"></div></div>
+    <div id="resultBox" hidden></div>
+    <button id="submitBtn" class="primary" disabled>제출하기</button>
+    <div class="muted small" id="playHint">빙고 3줄을 만들면 제출 버튼이 켜져요.</div>
+  </section>
+
+  <!-- host -->
+  <section id="vHost" hidden style="display:flex;flex-direction:column;gap:16px">
+    <div class="row" style="justify-content:space-between">
+      <div><span class="muted small">게임 코드</span> <span class="bigcode" id="hostCode"></span></div>
+      <div class="tabs" role="tablist">
+        <button role="tab" data-tab="live" aria-selected="true">순위 현황</button>
+        <button role="tab" data-tab="edit" aria-selected="false">문제 편집</button>
+        <button role="tab" data-tab="share" aria-selected="false">참가 링크</button>
+      </div>
+    </div>
+
+    <div id="tabLive" class="host-grid">
+      <div class="panel">
+        <div class="row" style="justify-content:space-between"><h2>통과 순위</h2><span class="chip ok">자동 채점 중</span></div>
+        <div class="stats">
+          <div class="stat"><b id="sPlayers">0</b><span>참가</span></div>
+          <div class="stat"><b id="sPassed">0</b><span>통과</span></div>
+          <div class="stat"><b id="sSubs">0</b><span>총 제출</span></div>
+        </div>
+        <div class="scroll"><table><thead><tr><th>순위</th><th>이름</th><th>통과 시각</th><th>시도</th></tr></thead><tbody id="rankBody"></tbody></table></div>
+        <div id="rankEmpty" class="muted">아직 통과한 사람이 없어요. 첫 통과자가 나오면 1등부터 표시돼요.</div>
+      </div>
+      <div class="panel">
+        <h2>진행 중</h2>
+        <div class="scroll"><table><thead><tr><th>이름</th><th>푼 칸</th><th>빙고</th><th>최근 결과</th></tr></thead><tbody id="progBody"></tbody></table></div>
+        <div id="progEmpty" class="muted">참가자가 입장하면 진행 상황이 실시간으로 보여요.</div>
+        <div class="muted small">채점은 이 화면에서 이뤄져요. 게임이 끝날 때까지 이 화면을 켜 두세요.</div>
+        <div class="row" style="justify-content:flex-end">
+          <button id="resetBtn" class="danger">기록 초기화</button>
+          <button id="resetConfirm" class="danger" hidden>정말 초기화 (참가자·순위 전부 삭제)</button>
+        </div>
+      </div>
+    </div>
+
+    <div id="tabEdit" class="panel" hidden>
+      <div class="row" style="justify-content:space-between"><h2>문제 16개</h2><button id="saveQs" class="primary">저장</button></div>
+      <label class="muted small" for="titleInput">게임 제목</label>
+      <input id="titleInput" maxlength="40">
+      <div class="muted small">빙고판 칸 순서대로 1~16번이에요. (1~4번이 첫 줄)</div>
+      <div id="qList" style="display:grid;gap:10px"></div>
+      <div class="row" style="justify-content:flex-end"><button id="saveQs2" class="primary">저장</button></div>
+    </div>
+
+    <div id="tabShare" class="panel" hidden>
+      <h2>참가 링크</h2>
+      <div class="muted small">참가자는 이 QR을 찍거나 링크를 열면 바로 들어와요. 앱 설치나 로그인은 필요 없어요.</div>
+      <div class="qr" id="qr"></div>
+      <div class="linkbox" id="joinLink"></div>
+      <div class="row"><button id="copyLink">링크 복사</button></div>
+    </div>
+  </section>
+</div>
+
+<div id="sheetBack" class="sheet-back" hidden>
+  <div class="sheet" role="dialog" aria-modal="true" aria-labelledby="sheetQ">
+    <div class="row" style="justify-content:space-between"><span class="eyebrow" id="sheetMeta"></span><button id="sheetClose" class="ghost">닫기</button></div>
+    <div class="qtext" id="sheetQ"></div>
+    <div class="opts" id="sheetOpts"></div>
+    <button id="sheetClear" class="ghost" hidden>답 지우기</button>
+  </div>
+</div>
+<div id="toast" class="toast" hidden></div>
+
+<script src="https://www.gstatic.com/firebasejs/10.12.2/firebase-app-compat.js"></script>
+<script src="https://www.gstatic.com/firebasejs/10.12.2/firebase-auth-compat.js"></script>
+<script src="https://www.gstatic.com/firebasejs/10.12.2/firebase-database-compat.js"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/qrcodejs/1.0.0/qrcode.min.js"></script>
+<script>
+/* ================================================================
+   1) 여기에 Firebase 웹 앱 설정을 붙여 넣으세요
+      (Firebase 콘솔 → 프로젝트 설정 → 내 앱 → SDK 설정 및 구성)
+   ================================================================ */
+   const firebaseConfig = {
+  apiKey: "AIzaSyDb0EwwxZ4w-Hne82JoH-fy2JigPxzyzsM",
+  authDomain: "deep-sea-crew.firebaseapp.com",
+  databaseURL: "https://deep-sea-crew-default-rtdb.firebaseio.com",
+  projectId: "deep-sea-crew",
+  storageBucket: "deep-sea-crew.firebasestorage.app",
+  messagingSenderId: "617686540511",
+  appId: "1:617686540511:web:260c10c50275b00eddc96a",
+  measurementId: "G-05FGPGVTDW"
+};
+const ROOT = "bingo"; // DB 안에서 이 앱이 쓰는 최상위 경로
+
+/* 새 게임을 만들 때 기본으로 들어가는 예시 문제 (진행자 화면 '문제 편집'에서 바꿀 수 있어요) */
+const SAMPLE = [
+  {type:"ox", q:"성인의 뼈는 206개다.", a:"O"},
+  {type:"mc", q:"남한에서 가장 높은 산은?", options:["한라산","지리산","설악산","오대산"], a:0},
+  {type:"ox", q:"문어의 심장은 3개다.", a:"O"},
+  {type:"mc", q:"축구 경기에서 한 팀이 경기장에 내보내는 선수 수는?", options:["9명","10명","11명","12명"], a:2},
+  {type:"ox", q:"바나나는 나무가 아니라 풀에서 열린다.", a:"O"},
+  {type:"mc", q:"태양계에서 가장 큰 행성은?", options:["토성","목성","해왕성","천왕성"], a:1},
+  {type:"ox", q:"한글을 창제한 왕은 세조이다.", a:"X"},
+  {type:"mc", q:"1년 중 낮이 가장 긴 절기는?", options:["춘분","하지","추분","동지"], a:1},
+  {type:"ox", q:"펭귄은 북극에 산다.", a:"X"},
+  {type:"mc", q:"무지개 일곱 색 중 네 번째 색은?", options:["노랑","초록","파랑","주황"], a:1},
+  {type:"ox", q:"물은 해수면 기준 100℃에서 끓는다.", a:"O"},
+  {type:"mc", q:"올림픽 오륜기의 고리는 몇 개?", options:["4개","5개","6개","7개"], a:1},
+  {type:"ox", q:"고래는 물고기(어류)다.", a:"X"},
+  {type:"mc", q:"대한민국의 나라꽃은?", options:["진달래","무궁화","개나리","벚꽃"], a:1},
+  {type:"ox", q:"1년(365일)은 52주보다 길다.", a:"O"},
+  {type:"mc", q:"다음 중 포유류가 아닌 것은?", options:["박쥐","돌고래","오리너구리","상어"], a:3}
+];
+
+(() => {
+const $ = id => document.getElementById(id);
+const LINES=[[0,1,2,3],[4,5,6,7],[8,9,10,11],[12,13,14,15],[0,4,8,12],[1,5,9,13],[2,6,10,14],[3,7,11,15],[0,5,10,15],[3,6,9,12]];
+const LS={get(k){try{return localStorage.getItem(k)}catch(e){return null}},set(k,v){try{localStorage.setItem(k,v)}catch(e){}}};
+
+let fb=null, uid=null, code=null, game=null, answersKey=null, isHost=false;
+let players={}, results={}, refs=[];
+let me={name:"",answers:{},submitSeq:0}, restored=false;
+let sheetIdx=-1, saveTimer=null, writing=Promise.resolve(), firstGameLoad=true;
+const inflight={};
+
+/* ---------- helpers ---------- */
+function toast(m){const t=$("toast");t.textContent=m;t.hidden=false;clearTimeout(toast._t);toast._t=setTimeout(()=>t.hidden=true,2400)}
+const VIEWS=["vLoading","vLanding","vJoin","vPlay","vHost"];
+function show(id){VIEWS.forEach(v=>$(v).hidden=v!==id);$("app").classList.toggle("wide",id==="vHost");$("homeBtn").hidden=id==="vLanding"||id==="vLoading"}
+function msg(t){$("vMsg").textContent=t||"";$("vMsg").hidden=!t}
+function linesOf(ans){const s=new Set(Object.keys(ans).map(Number));return LINES.filter(l=>l.every(i=>s.has(i)))}
+function fmtTime(ms){if(!ms||typeof ms!=="number")return "-";return new Date(ms).toLocaleTimeString("ko-KR",{hour:"2-digit",minute:"2-digit",second:"2-digit",hour12:false})}
+function rankedPassed(){return Object.entries(results).filter(([,r])=>r&&r.passed&&typeof r.passedAt==="number").sort((a,b)=>a[1].passedAt-b[1].passedAt)}
+function toDb(ans){const o={};for(const k of Object.keys(ans))o["q"+k]=ans[k];return o}
+function fromDb(o){const r={};if(o)for(const k of Object.keys(o)){const i=Number(k.slice(1));if(k[0]==="q"&&i>=0&&i<16)r[i]=o[k]}return r}
+function ref(p){return fb.database().ref(ROOT+"/"+p)}
+function TS(){return firebase.database.ServerValue.TIMESTAMP}
+function joinUrl(c){return location.origin+location.pathname+"?code="+c}
+function myGames(){try{return JSON.parse(LS.get("bingo-my-games")||"[]")}catch(e){return[]}}
+
+/* ---------- landing ---------- */
+function showLanding(){
+  detach(); code=null; game=null; history.replaceState(null,"",location.pathname);
+  $("gameTitle").textContent="야유회 퀴즈 빙고"; msg("");
+  const list=$("myGames"); list.textContent="";
+  const gs=myGames(); $("myGamesWrap").hidden=!gs.length;
+  gs.slice(0,5).forEach(g=>{const b=document.createElement("button");b.className="ghost";b.style.textAlign="left";
+    b.textContent=`${g.code} · ${g.title||"야유회 퀴즈 빙고"}`;b.onclick=()=>openGame(g.code);list.append(b)});
+  show("vLanding");
+}
+$("homeBtn").onclick=showLanding;
+$("codeForm").addEventListener("submit",e=>{e.preventDefault();const c=$("codeInput").value.replace(/\D/g,"");
+  if(c.length!==4){toast("코드 4자리를 입력해 주세요");return}openGame(c)});
+$("createBtn").onclick=async()=>{
+  $("createBtn").disabled=true;
+  try{
+    let made=null;
+    for(let t=0;t<8&&!made;t++){
+      const c=String(Math.floor(1000+Math.random()*9000));
+      const r=await ref("games/"+c).transaction(cur=>cur===null?{owner:uid,title:"야유회 퀴즈 빙고",createdAt:Date.now(),
+        questions:SAMPLE.map(({type,q,options})=>type==="mc"?{type,q,options}:{type,q})}:undefined);
+      if(r.committed)made=c;
+    }
+    if(!made)throw new Error("no code");
+    await ref("secrets/"+made).set({answers:SAMPLE.map(s=>s.a)});
+    const gs=myGames().filter(g=>g.code!==made);gs.unshift({code:made,title:"야유회 퀴즈 빙고"});LS.set("bingo-my-games",JSON.stringify(gs.slice(0,10)));
+    openGame(made);
+  }catch(e){console.error(e);toast("게임을 만들지 못했어요. Firebase 설정과 보안 규칙을 확인해 주세요.")}
+  $("createBtn").disabled=false;
+};
+
+/* ---------- game ---------- */
+function detach(){refs.forEach(r=>r.off());refs=[];players={};results={};answersKey=null;isHost=false;restored=false;firstGameLoad=true;me={name:"",answers:{},submitSeq:0}}
+function openGame(c){
+  detach(); code=c; history.replaceState(null,"","?code="+c); show("vLoading"); msg("");
+  const g=ref("games/"+c); refs.push(g);
+  g.on("value",s=>{
+    game=s.val();
+    if(!game){showLanding();msg("이 코드의 게임을 찾을 수 없어요. 코드를 다시 확인해 주세요.");return}
+    $("gameTitle").textContent=game.title||"야유회 퀴즈 빙고";
+    if(firstGameLoad){firstGameLoad=false;isHost=game.owner===uid;
+      const p=ref("players/"+c),r=ref("results/"+c);refs.push(p,r);
+      p.on("value",onPlayers,err);r.on("value",onResults,err);
+      if(isHost){const k=ref("secrets/"+c);refs.push(k);k.on("value",s=>{answersKey=(s.val()||{}).answers||null;gradeAll()},err);enterHost()}
+      else enterPlayer();
+    } else if(isHost){renderHost()} else if(!$("vPlay").hidden) renderBoard();
+  },err);
+}
+function err(e){console.error(e);msg("데이터를 읽지 못했어요. 인터넷 연결을 확인하고 새로고침해 주세요.")}
+function onPlayers(s){
+  const had=players[uid]; players=s.val()||{}; const mine=players[uid];
+  if(!isHost){
+    if(mine&&!restored){restored=true;me={name:mine.name||"",answers:fromDb(mine.answers),submitSeq:mine.submitSeq||0};startPlay()}
+    else if(had&&!mine&&me.name){me={name:me.name,answers:{},submitSeq:0};toast("진행자가 기록을 초기화했어요");writeMe();renderBoard()}
+  }
+  if(isHost){renderHost();gradeAll()}
+}
+function onResults(s){results=s.val()||{};if(isHost){renderHost();gradeAll()}else if(!$("vPlay").hidden)renderBoard()}
+
+/* ---------- player ---------- */
+function enterPlayer(){restored=!!players[uid];if(me.name)startPlay();else{$("nameInput").value=LS.get("bingo-name")||"";show("vJoin")}}
+function startPlay(){$("meName").textContent=me.name;show("vPlay");renderBoard()}
+$("joinForm").addEventListener("submit",async e=>{
+  e.preventDefault();const n=$("nameInput").value.trim();if(!n){$("nameInput").focus();return}
+  me.name=n;restored=true;LS.set("bingo-name",n);await writeMe();startPlay();
+});
+function renderBoard(){
+  const b=$("board");b.textContent="";const qs=(game&&game.questions)||[];
+  const inLine=new Set(linesOf(me.answers).flat());const locked=results[uid]&&results[uid].passed;
+  for(let i=0;i<16;i++){
+    const q=qs[i];const done=me.answers[i]!==undefined;
+    const c=document.createElement("button");c.className="cell"+(done?" done":"")+(inLine.has(i)?" inline":"");
+    c.disabled=!!locked||!q;
+    const head=document.createElement("div");head.className="head";
+    const n=document.createElement("span");n.className="n";n.textContent=i+1;
+    const t=document.createElement("span");t.className="t";t.textContent=q?(q.type==="ox"?"OX":"객관식"):"";
+    head.append(n,t);
+    const qt=document.createElement("div");qt.className="q";qt.textContent=q?q.q:"";
+    c.append(head,qt);
+    if(done){const a=document.createElement("div");a.className="a";
+      a.textContent=q.type==="ox"?"✓ "+me.answers[i]:"✓ "+(Number(me.answers[i])+1)+"번";c.append(a)}
+    c.setAttribute("aria-label",`${i+1}번, ${q?q.q:""}${done?", 답함":""}`);
+    c.onclick=()=>openSheet(i);b.append(c);
+  }
+  const L=linesOf(me.answers).length;
+  document.querySelectorAll(".pip").forEach((p,i)=>p.classList.toggle("on",i<L));
+  const pending=me.submitSeq>0&&((results[uid]&&results[uid].lastSeq)||0)<me.submitSeq;
+  $("submitBtn").disabled=L<3||locked||pending;
+  $("playHint").textContent=locked?"통과했어요. 순위가 확정됐어요.":L<3?`빙고 ${L}/3줄 · ${3-L}줄 더 만들면 제출할 수 있어요.`:`빙고 ${L}줄 완성! 제출해서 채점받으세요.`;
+  renderResult(pending);
+}
+function renderResult(pending){
+  const box=$("resultBox"),r=results[uid];box.className="result";box.textContent="";
+  if(pending){box.classList.add("wait");box.innerHTML="<big>채점 중…</big>잠시만 기다려 주세요.";box.hidden=false;return}
+  if(!r||!r.lastSeq){box.hidden=true;return}
+  box.hidden=false;const big=document.createElement("big");box.append(big);
+  if(r.passed){const rank=rankedPassed().findIndex(([id])=>id===uid)+1;box.classList.add("ok");
+    big.textContent=rank?`통과! ${rank}등`:"통과!";box.append(`${r.attempts}번째 제출에서 성공했어요 · ${fmtTime(r.passedAt)}`)}
+  else{box.classList.add("bad");
+    if(r.wrong>0){big.textContent=`${r.wrong}개 틀렸어요`;box.append("어느 칸인지 찾아서 답을 고친 뒤 다시 제출하세요.")}
+    else{big.textContent="빙고가 부족해요";box.append("푼 칸으로 빙고 3줄을 만들어 주세요.")}}
+}
+function openSheet(i){
+  const q=game.questions[i];sheetIdx=i;
+  $("sheetMeta").textContent=`${i+1}번 · ${q.type==="ox"?"OX 퀴즈":"객관식"}`;$("sheetQ").textContent=q.q;
+  const box=$("sheetOpts");box.textContent="";box.className="opts"+(q.type==="ox"?" ox":"");
+  const opts=q.type==="ox"?["O","X"]:(q.options||[]);
+  opts.forEach((o,k)=>{if(q.type!=="ox"&&!o)return;const v=q.type==="ox"?o:k;
+    const b=document.createElement("button");b.className="opt"+(me.answers[i]===v?" sel":"");
+    b.textContent=q.type==="ox"?o:`${k+1}. ${o}`;
+    b.onclick=()=>{me.answers[i]=v;closeSheet();queueSave();renderBoard()};box.append(b)});
+  $("sheetClear").hidden=me.answers[i]===undefined;$("sheetBack").hidden=false;
+}
+function closeSheet(){$("sheetBack").hidden=true;sheetIdx=-1}
+$("sheetClose").onclick=closeSheet;
+$("sheetBack").addEventListener("click",e=>{if(e.target.id==="sheetBack")closeSheet()});
+$("sheetClear").onclick=()=>{delete me.answers[sheetIdx];closeSheet();queueSave();renderBoard()};
+document.addEventListener("keydown",e=>{if(e.key==="Escape"&&!$("sheetBack").hidden)closeSheet()});
+function writeMe(){
+  const body={name:me.name,answers:toDb(me.answers),submitSeq:me.submitSeq,updatedAt:TS()};
+  writing=writing.then(()=>ref("players/"+code+"/"+uid).set(body)).catch(e=>{console.error(e);toast("저장하지 못했어요. 연결을 확인해 주세요.")});
+  return writing;
+}
+function queueSave(){clearTimeout(saveTimer);saveTimer=setTimeout(writeMe,600)}
+$("submitBtn").onclick=async()=>{clearTimeout(saveTimer);me.submitSeq+=1;renderBoard();await writeMe()};
+
+/* ---------- host ---------- */
+function enterHost(){
+  $("hostCode").textContent=code;const url=joinUrl(code);$("joinLink").textContent=url;
+  const qr=$("qr");qr.textContent="";
+  if(window.QRCode){new QRCode(qr,{text:url,width:200,height:200,colorDark:"#1f2a1c",colorLight:"#ffffff"})}else qr.hidden=true;
+  $("qList").dataset.built="";$("qList").textContent="";
+  show("vHost");renderHost();
+}
+function gradeAll(){
+  if(!isHost||!answersKey)return;
+  for(const [id,p] of Object.entries(players)){
+    const r=results[id],seq=(p&&p.submitSeq)||0;
+    if(!seq||(r&&r.passed)||(r&&r.lastSeq>=seq)||inflight[id]===seq)continue;
+    inflight[id]=seq;const ans=fromDb(p.answers);let wrong=0;
+    for(const k of Object.keys(ans))if(String(ans[k])!==String(answersKey[k]))wrong++;
+    const L=linesOf(ans).length,passed=wrong===0&&L>=3;
+    ref("results/"+code+"/"+id).set({name:String(p.name||"").slice(0,16),lastSeq:seq,attempts:seq,wrong,lines:L,passed,passedAt:passed?TS():0})
+      .catch(e=>{console.error(e);delete inflight[id]});
+  }
+}
+function td(text,cls){const d=document.createElement("td");if(cls)d.className=cls;d.textContent=text;return d}
+function renderHost(){
+  const ranked=rankedPassed(),tb=$("rankBody");tb.textContent="";
+  ranked.forEach(([id,r],i)=>{const tr=document.createElement("tr");
+    tr.append(td(i+1,"rank"+(i===0?" r1":"")),td(r.name||(players[id]&&players[id].name)||"이름 없음"),td(fmtTime(r.passedAt),"mono"),td(r.attempts+"회","mono"));tb.append(tr)});
+  $("rankEmpty").hidden=ranked.length>0;
+  const pb=$("progBody");pb.textContent="";
+  const prog=Object.entries(players).filter(([id])=>!(results[id]&&results[id].passed)).map(([id,p])=>[id,p,fromDb(p.answers)])
+    .sort((a,b)=>linesOf(b[2]).length-linesOf(a[2]).length||Object.keys(b[2]).length-Object.keys(a[2]).length);
+  for(const [id,p,ans] of prog){
+    const r=results[id],tr=document.createElement("tr");
+    const d=document.createElement("td"),chip=document.createElement("span");
+    const pending=(p.submitSeq||0)>((r&&r.lastSeq)||0);
+    if(pending){chip.className="chip wait";chip.textContent="채점 중"}
+    else if(r&&r.lastSeq){chip.className="chip bad";chip.textContent=r.wrong>0?`${r.wrong}개 오답`:"빙고 부족"}
+    else{chip.className="chip";chip.textContent="풀이 중"}
+    d.append(chip);tr.append(td(p.name||"이름 없음"),td(Object.keys(ans).length+"/16","mono"),td(linesOf(ans).length+"줄","mono"),d);pb.append(tr);
+  }
+  $("progEmpty").hidden=prog.length>0;
+  $("sPlayers").textContent=Object.keys(players).length;$("sPassed").textContent=ranked.length;
+  $("sSubs").textContent=Object.values(players).reduce((s,p)=>s+((p&&p.submitSeq)||0),0);
+}
+document.querySelectorAll("[data-tab]").forEach(b=>b.onclick=()=>{
+  document.querySelectorAll("[data-tab]").forEach(x=>x.setAttribute("aria-selected",String(x===b)));
+  ["live","edit","share"].forEach(t=>$("tab"+t[0].toUpperCase()+t.slice(1)).hidden=b.dataset.tab!==t);
+  if(b.dataset.tab==="edit")buildEditor();
+});
+$("copyLink").onclick=()=>{const u=joinUrl(code);
+  navigator.clipboard.writeText(u).then(()=>toast("링크를 복사했어요"),()=>{const s=getSelection(),r=document.createRange();r.selectNodeContents($("joinLink"));s.removeAllRanges();s.addRange(r);toast("링크를 선택했어요. 길게 눌러 복사하세요")})};
+$("resetBtn").onclick=()=>{$("resetConfirm").hidden=false;$("resetBtn").hidden=true;setTimeout(()=>{$("resetConfirm").hidden=true;$("resetBtn").hidden=false},5000)};
+$("resetConfirm").onclick=async()=>{$("resetConfirm").hidden=true;$("resetBtn").hidden=false;
+  try{await ref("results/"+code).remove();await ref("players/"+code).remove();Object.keys(inflight).forEach(k=>delete inflight[k]);toast("기록을 초기화했어요")}catch(e){toast("초기화하지 못했어요")}};
+
+function buildEditor(){
+  const list=$("qList");if(list.dataset.built)return;list.dataset.built="1";list.textContent="";
+  $("titleInput").value=game.title||"야유회 퀴즈 빙고";
+  for(let i=0;i<16;i++){
+    const q=(game.questions||[])[i]||{type:"ox",q:""};const ans=answersKey?answersKey[i]:undefined;
+    const w=document.createElement("div");w.className="qedit";
+    w.innerHTML=`<div class="head"><span class="num">${i+1}</span>
+      <select id="qt${i}" aria-label="${i+1}번 유형"><option value="ox">OX 퀴즈</option><option value="mc">객관식</option></select>
+      <select id="qa${i}" aria-label="${i+1}번 정답" style="margin-left:auto"></select></div>
+      <textarea id="qq${i}" rows="2" maxlength="200" placeholder="문제를 입력하세요" aria-label="${i+1}번 문제"></textarea>
+      <div class="optgrid" id="qo${i}">${[0,1,2,3].map(k=>`<input id="qo${i}_${k}" maxlength="60" placeholder="보기 ${k+1}" aria-label="${i+1}번 보기 ${k+1}">`).join("")}</div>`;
+    list.append(w);
+    $("qt"+i).value=q.type==="mc"?"mc":"ox";$("qq"+i).value=q.q||"";
+    [0,1,2,3].forEach(k=>$(`qo${i}_${k}`).value=(q.options||[])[k]||"");
+    const sync=()=>{const t=$("qt"+i).value;$("qo"+i).hidden=t!=="mc";const sel=$("qa"+i),prev=sel.value;sel.textContent="";
+      (t==="ox"?[["O","정답 O"],["X","정답 X"]]:[0,1,2,3].map(k=>[String(k),`정답 ${k+1}번`])).forEach(([v,l])=>{const o=document.createElement("option");o.value=v;o.textContent=l;sel.append(o)});
+      if([...sel.options].some(o=>o.value===prev))sel.value=prev};
+    $("qt"+i).onchange=sync;sync();
+    if(ans!==undefined&&[...$("qa"+i).options].some(o=>o.value===String(ans)))$("qa"+i).value=String(ans);
+  }
+}
+async function saveQuestions(){
+  const qs=[],ans=[];
+  for(let i=0;i<16;i++){
+    const type=$("qt"+i).value,q=$("qq"+i).value.trim();
+    if(!q){toast(`${i+1}번 문제가 비어 있어요`);$("qq"+i).focus();return}
+    if(type==="ox"){qs.push({type,q});ans.push($("qa"+i).value)}
+    else{const options=[0,1,2,3].map(k=>$(`qo${i}_${k}`).value.trim()),a=Number($("qa"+i).value);
+      if(options.filter(Boolean).length<2){toast(`${i+1}번 보기를 2개 이상 입력하세요`);return}
+      if(!options[a]){toast(`${i+1}번 정답 보기가 비어 있어요`);return}
+      qs.push({type,q,options});ans.push(a)}
+  }
+  const title=$("titleInput").value.trim()||"야유회 퀴즈 빙고";
+  try{
+    await ref("games/"+code).update({title,questions:qs});
+    await ref("secrets/"+code).set({answers:ans});
+    const gs=myGames().map(g=>g.code===code?{...g,title}:g);LS.set("bingo-my-games",JSON.stringify(gs));
+    toast("문제를 저장했어요");
+  }catch(e){console.error(e);toast("저장하지 못했어요. 다시 시도해 주세요.")}
+}
+$("saveQs").onclick=saveQuestions;$("saveQs2").onclick=saveQuestions;
+
+/* ---------- boot ---------- */
+if(!FIREBASE_CONFIG.apiKey||!FIREBASE_CONFIG.databaseURL){
+  show("vLoading");$("vLoading").hidden=true;
+  msg("Firebase 설정이 비어 있어요. index.html 위쪽 FIREBASE_CONFIG에 내 프로젝트 설정을 붙여 넣어 주세요. (README 참고)");
+  return;
+}
+fb=firebase.initializeApp(FIREBASE_CONFIG);
+fb.auth().onAuthStateChanged(u=>{
+  if(!u)return; if(uid)return; uid=u.uid;
+  const c=new URLSearchParams(location.search).get("code");
+  if(c&&/^\d{4}$/.test(c))openGame(c);else showLanding();
+});
+fb.auth().signInAnonymously().catch(e=>{console.error(e);$("vLoading").hidden=true;msg("접속하지 못했어요. Firebase 콘솔에서 '익명 로그인'을 켰는지 확인해 주세요.")});
+})();
+</script>
+</body>
+</html>

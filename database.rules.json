@@ -1,0 +1,34 @@
+{
+  "rules": {
+    "bingo": {
+      "games": {
+        "$code": {
+          ".read": "auth != null",
+          ".write": "auth != null && (data.exists() ? data.child('owner').val() === auth.uid : newData.child('owner').val() === auth.uid)"
+        }
+      },
+      "secrets": {
+        "$code": {
+          ".read": "auth != null && root.child('bingo/games/' + $code + '/owner').val() === auth.uid",
+          ".write": "auth != null && root.child('bingo/games/' + $code + '/owner').val() === auth.uid"
+        }
+      },
+      "players": {
+        "$code": {
+          ".read": "auth != null",
+          ".write": "auth != null && root.child('bingo/games/' + $code + '/owner').val() === auth.uid",
+          "$uid": {
+            ".write": "auth != null && auth.uid === $uid && root.child('bingo/games/' + $code).exists()",
+            ".validate": "newData.child('name').isString() && newData.child('name').val().length <= 16"
+          }
+        }
+      },
+      "results": {
+        "$code": {
+          ".read": "auth != null",
+          ".write": "auth != null && root.child('bingo/games/' + $code + '/owner').val() === auth.uid"
+        }
+      }
+    }
+  }
+}

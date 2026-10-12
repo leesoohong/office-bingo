@@ -110,6 +110,14 @@ th{font-size:12px;color:var(--muted);font-weight:500}
 .qr{background:#fff;padding:12px;border-radius:12px;align-self:flex-start}
 .linkbox{font-family:var(--f-mono);font-size:13px;word-break:break-all;padding:10px;border:1px dashed var(--line);border-radius:10px;user-select:all}
 .gamelist{display:flex;flex-direction:column;gap:6px}
+.waitnames{display:flex;flex-wrap:wrap;gap:6px}
+.waitnames span{font-size:13px;padding:4px 10px;border-radius:99px;background:var(--bg);border:1px solid var(--line)}
+.waitnames span.me{border-color:var(--tomato);color:var(--tomato);font-weight:700}
+.pulse{display:inline-block;width:10px;height:10px;border-radius:50%;background:var(--mustard);margin-right:6px;vertical-align:middle}
+@media (prefers-reduced-motion:no-preference){.pulse{animation:pulse 1.4s ease-in-out infinite}@keyframes pulse{50%{opacity:.25}}}
+.ctl{flex-direction:row;align-items:center;justify-content:space-between;flex-wrap:wrap}
+.ctl b{font-family:var(--f-display);font-weight:400;font-size:22px}
+button.big{padding:14px 22px;font-size:17px}
 .toast{position:fixed;left:50%;transform:translateX(-50%);bottom:calc(20px + env(safe-area-inset-bottom,0px));background:var(--ink);color:var(--bg);padding:10px 16px;border-radius:99px;z-index:20;max-width:90vw}
 @media (prefers-reduced-motion:no-preference){.cell{transition:background .15s,transform .1s}.cell:active{transform:scale(.96)}}
 </style>
@@ -158,6 +166,15 @@ th{font-size:12px;color:var(--muted);font-weight:500}
     <div class="muted small">규칙: 칸을 눌러 문제를 풀고, 푼 칸으로 빙고 3줄을 만들면 제출할 수 있어요. 푼 문제가 모두 맞아야 통과예요.</div>
   </section>
 
+  <!-- waiting room -->
+  <section id="vWait" class="panel" hidden>
+    <div class="eyebrow"><span class="pulse"></span>대기 중</div>
+    <h2><span id="waitName"></span>님, 입장 완료!</h2>
+    <p class="muted" style="margin:0">진행자가 게임을 시작하면 빙고판이 바로 열려요. 이 화면을 켜 두세요.</p>
+    <div class="muted small" id="waitCount">0명 입장</div>
+    <div class="waitnames" id="waitNames"></div>
+  </section>
+
   <!-- play -->
   <section id="vPlay" hidden style="display:flex;flex-direction:column;gap:14px">
     <div class="meter">
@@ -181,6 +198,11 @@ th{font-size:12px;color:var(--muted);font-weight:500}
       </div>
     </div>
 
+    <div class="panel ctl">
+      <div><div class="eyebrow">게임 상태</div><b id="statusText">대기 중</b> <span class="muted small" id="statusSub"></span></div>
+      <button id="startBtn" class="primary big">게임 시작</button>
+    </div>
+
     <div id="tabLive" class="host-grid">
       <div class="panel">
         <div class="row" style="justify-content:space-between"><h2>통과 순위</h2><span class="chip ok">자동 채점 중</span></div>
@@ -189,7 +211,7 @@ th{font-size:12px;color:var(--muted);font-weight:500}
           <div class="stat"><b id="sPassed">0</b><span>통과</span></div>
           <div class="stat"><b id="sSubs">0</b><span>총 제출</span></div>
         </div>
-        <div class="scroll"><table><thead><tr><th>순위</th><th>이름</th><th>통과 시각</th><th>시도</th></tr></thead><tbody id="rankBody"></tbody></table></div>
+        <div class="scroll"><table><thead><tr><th>순위</th><th>이름</th><th>걸린 시간</th><th>시도</th></tr></thead><tbody id="rankBody"></tbody></table></div>
         <div id="rankEmpty" class="muted">아직 통과한 사람이 없어요. 첫 통과자가 나오면 1등부터 표시돼요.</div>
       </div>
       <div class="panel">
@@ -198,7 +220,7 @@ th{font-size:12px;color:var(--muted);font-weight:500}
         <div id="progEmpty" class="muted">참가자가 입장하면 진행 상황이 실시간으로 보여요.</div>
         <div class="muted small">채점은 이 화면에서 이뤄져요. 게임이 끝날 때까지 이 화면을 켜 두세요.</div>
         <div class="row" style="justify-content:flex-end">
-          <button id="resetBtn" class="danger">기록 초기화</button>
+          <button id="resetBtn" class="danger">기록 초기화 (대기로 돌아가기)</button>
           <button id="resetConfirm" class="danger" hidden>정말 초기화 (참가자·순위 전부 삭제)</button>
         </div>
       </div>
@@ -233,6 +255,10 @@ th{font-size:12px;color:var(--muted);font-weight:500}
 </div>
 <div id="toast" class="toast" hidden></div>
 
+<script>
+window.addEventListener("error",function(e){var m=document.getElementById("vMsg"),l=document.getElementById("vLoading");if(m){m.textContent="페이지를 실행하지 못했어요: "+(e.message||"알 수 없는 오류")+" (index.html 설정 부분을 확인해 주세요)";m.hidden=false}if(l)l.hidden=true});
+setTimeout(function(){var l=document.getElementById("vLoading"),m=document.getElementById("vMsg");if(l&&!l.hidden&&m&&m.hidden){m.textContent="접속이 오래 걸리고 있어요. 인터넷 연결을 확인하거나, Firebase 승인된 도메인에 이 사이트 주소가 있는지 확인해 주세요.";m.hidden=false}},12000);
+</script>
 <script src="https://www.gstatic.com/firebasejs/10.12.2/firebase-app-compat.js"></script>
 <script src="https://www.gstatic.com/firebasejs/10.12.2/firebase-auth-compat.js"></script>
 <script src="https://www.gstatic.com/firebasejs/10.12.2/firebase-database-compat.js"></script>
@@ -287,12 +313,15 @@ const inflight={};
 
 /* ---------- helpers ---------- */
 function toast(m){const t=$("toast");t.textContent=m;t.hidden=false;clearTimeout(toast._t);toast._t=setTimeout(()=>t.hidden=true,2400)}
-const VIEWS=["vLoading","vLanding","vJoin","vPlay","vHost"];
+const VIEWS=["vLoading","vLanding","vJoin","vWait","vPlay","vHost"];
 function show(id){VIEWS.forEach(v=>$(v).hidden=v!==id);$("app").classList.toggle("wide",id==="vHost");$("homeBtn").hidden=id==="vLanding"||id==="vLoading"}
 function msg(t){$("vMsg").textContent=t||"";$("vMsg").hidden=!t}
 function linesOf(ans){const s=new Set(Object.keys(ans).map(Number));return LINES.filter(l=>l.every(i=>s.has(i)))}
 function fmtTime(ms){if(!ms||typeof ms!=="number")return "-";return new Date(ms).toLocaleTimeString("ko-KR",{hour:"2-digit",minute:"2-digit",second:"2-digit",hour12:false})}
 function rankedPassed(){return Object.entries(results).filter(([,r])=>r&&r.passed&&typeof r.passedAt==="number").sort((a,b)=>a[1].passedAt-b[1].passedAt)}
+function st(){return (game&&game.status)||"waiting"}
+function fmtElapsed(ms){if(typeof ms!=="number"||ms<0)return "-";const t=Math.round(ms/1000),m=Math.floor(t/60),x=t%60;return m?`${m}분 ${x}초`:`${x}초`}
+function elapsedOf(r){return (game&&typeof game.startedAt==="number"&&typeof r.passedAt==="number")?r.passedAt-game.startedAt:null}
 function toDb(ans){const o={};for(const k of Object.keys(ans))o["q"+k]=ans[k];return o}
 function fromDb(o){const r={};if(o)for(const k of Object.keys(o)){const i=Number(k.slice(1));if(k[0]==="q"&&i>=0&&i<16)r[i]=o[k]}return r}
 function ref(p){return fb.database().ref(ROOT+"/"+p)}
@@ -319,7 +348,7 @@ $("createBtn").onclick=async()=>{
     let made=null;
     for(let t=0;t<8&&!made;t++){
       const c=String(Math.floor(1000+Math.random()*9000));
-      const r=await ref("games/"+c).transaction(cur=>cur===null?{owner:uid,title:"야유회 퀴즈 빙고",createdAt:Date.now(),
+      const r=await ref("games/"+c).transaction(cur=>cur===null?{owner:uid,title:"야유회 퀴즈 빙고",status:"waiting",createdAt:Date.now(),
         questions:SAMPLE.map(({type,q,options})=>type==="mc"?{type,q,options}:{type,q})}:undefined);
       if(r.committed)made=c;
     }
@@ -345,26 +374,38 @@ function openGame(c){
       p.on("value",onPlayers,err);r.on("value",onResults,err);
       if(isHost){const k=ref("secrets/"+c);refs.push(k);k.on("value",s=>{answersKey=(s.val()||{}).answers||null;gradeAll()},err);enterHost()}
       else enterPlayer();
-    } else if(isHost){renderHost()} else if(!$("vPlay").hidden) renderBoard();
+    } else if(isHost){renderHost()} else if(me.name&&restored) playerRoute();
   },err);
 }
 function err(e){console.error(e);msg("데이터를 읽지 못했어요. 인터넷 연결을 확인하고 새로고침해 주세요.")}
 function onPlayers(s){
   const had=players[uid]; players=s.val()||{}; const mine=players[uid];
   if(!isHost){
-    if(mine&&!restored){restored=true;me={name:mine.name||"",answers:fromDb(mine.answers),submitSeq:mine.submitSeq||0};startPlay()}
-    else if(had&&!mine&&me.name){me={name:me.name,answers:{},submitSeq:0};toast("진행자가 기록을 초기화했어요");writeMe();renderBoard()}
+    if(mine&&!restored){restored=true;me={name:mine.name||"",answers:fromDb(mine.answers),submitSeq:mine.submitSeq||0};playerRoute()}
+    else if(had&&!mine&&me.name){me={name:me.name,answers:{},submitSeq:0};toast("진행자가 게임을 초기화했어요");writeMe();playerRoute()}
+    if(!$("vWait").hidden)renderWait();
   }
   if(isHost){renderHost();gradeAll()}
 }
 function onResults(s){results=s.val()||{};if(isHost){renderHost();gradeAll()}else if(!$("vPlay").hidden)renderBoard()}
 
 /* ---------- player ---------- */
-function enterPlayer(){restored=!!players[uid];if(me.name)startPlay();else{$("nameInput").value=LS.get("bingo-name")||"";show("vJoin")}}
-function startPlay(){$("meName").textContent=me.name;show("vPlay");renderBoard()}
+function enterPlayer(){restored=!!players[uid];if(me.name)playerRoute();else{$("nameInput").value=LS.get("bingo-name")||"";show("vJoin")}}
+function playerRoute(){
+  if(!me.name){show("vJoin");return}
+  if(st()==="playing"){$("meName").textContent=me.name;if($("vPlay").hidden)show("vPlay");renderBoard()}
+  else{closeSheet();show("vWait");renderWait()}
+}
+function renderWait(){
+  $("waitName").textContent=me.name;
+  const list=Object.entries(players).filter(([,p])=>p&&p.name);
+  $("waitCount").textContent=`지금 ${list.length}명 입장했어요`;
+  const box=$("waitNames");box.textContent="";
+  list.forEach(([id,p])=>{const t=document.createElement("span");t.textContent=p.name;if(id===uid)t.className="me";box.append(t)});
+}
 $("joinForm").addEventListener("submit",async e=>{
   e.preventDefault();const n=$("nameInput").value.trim();if(!n){$("nameInput").focus();return}
-  me.name=n;restored=true;LS.set("bingo-name",n);await writeMe();startPlay();
+  me.name=n;restored=true;LS.set("bingo-name",n);await writeMe();playerRoute();
 });
 function renderBoard(){
   const b=$("board");b.textContent="";const qs=(game&&game.questions)||[];
@@ -397,7 +438,7 @@ function renderResult(pending){
   if(!r||!r.lastSeq){box.hidden=true;return}
   box.hidden=false;const big=document.createElement("big");box.append(big);
   if(r.passed){const rank=rankedPassed().findIndex(([id])=>id===uid)+1;box.classList.add("ok");
-    big.textContent=rank?`통과! ${rank}등`:"통과!";box.append(`${r.attempts}번째 제출에서 성공했어요 · ${fmtTime(r.passedAt)}`)}
+    big.textContent=rank?`통과! ${rank}등`:"통과!";const el=elapsedOf(r);box.append(`${r.attempts}번째 제출에서 성공했어요`+(el!==null?` · ${fmtElapsed(el)} 걸렸어요`:""))}
   else{box.classList.add("bad");
     if(r.wrong>0){big.textContent=`${r.wrong}개 틀렸어요`;box.append("어느 칸인지 찾아서 답을 고친 뒤 다시 제출하세요.")}
     else{big.textContent="빙고가 부족해요";box.append("푼 칸으로 빙고 3줄을 만들어 주세요.")}}
@@ -435,7 +476,7 @@ function enterHost(){
   show("vHost");renderHost();
 }
 function gradeAll(){
-  if(!isHost||!answersKey)return;
+  if(!isHost||!answersKey||st()!=="playing")return;
   for(const [id,p] of Object.entries(players)){
     const r=results[id],seq=(p&&p.submitSeq)||0;
     if(!seq||(r&&r.passed)||(r&&r.lastSeq>=seq)||inflight[id]===seq)continue;
@@ -450,7 +491,7 @@ function td(text,cls){const d=document.createElement("td");if(cls)d.className=cl
 function renderHost(){
   const ranked=rankedPassed(),tb=$("rankBody");tb.textContent="";
   ranked.forEach(([id,r],i)=>{const tr=document.createElement("tr");
-    tr.append(td(i+1,"rank"+(i===0?" r1":"")),td(r.name||(players[id]&&players[id].name)||"이름 없음"),td(fmtTime(r.passedAt),"mono"),td(r.attempts+"회","mono"));tb.append(tr)});
+    tr.append(td(i+1,"rank"+(i===0?" r1":"")),td(r.name||(players[id]&&players[id].name)||"이름 없음"),td(elapsedOf(r)!==null?fmtElapsed(elapsedOf(r)):fmtTime(r.passedAt),"mono"),td(r.attempts+"회","mono"));tb.append(tr)});
   $("rankEmpty").hidden=ranked.length>0;
   const pb=$("progBody");pb.textContent="";
   const prog=Object.entries(players).filter(([id])=>!(results[id]&&results[id].passed)).map(([id,p])=>[id,p,fromDb(p.answers)])
@@ -459,12 +500,17 @@ function renderHost(){
     const r=results[id],tr=document.createElement("tr");
     const d=document.createElement("td"),chip=document.createElement("span");
     const pending=(p.submitSeq||0)>((r&&r.lastSeq)||0);
-    if(pending){chip.className="chip wait";chip.textContent="채점 중"}
+    if(st()!=="playing"){chip.className="chip";chip.textContent="대기 중"}
+    else if(pending){chip.className="chip wait";chip.textContent="채점 중"}
     else if(r&&r.lastSeq){chip.className="chip bad";chip.textContent=r.wrong>0?`${r.wrong}개 오답`:"빙고 부족"}
     else{chip.className="chip";chip.textContent="풀이 중"}
     d.append(chip);tr.append(td(p.name||"이름 없음"),td(Object.keys(ans).length+"/16","mono"),td(linesOf(ans).length+"줄","mono"),d);pb.append(tr);
   }
   $("progEmpty").hidden=prog.length>0;
+  const playing=st()==="playing",n=Object.keys(players).length;
+  $("statusText").textContent=playing?"게임 진행 중":"대기 중";
+  $("statusSub").textContent=playing?(typeof game.startedAt==="number"?`${fmtTime(game.startedAt)} 시작`:""):`참가자 ${n}명 입장`;
+  $("startBtn").hidden=playing;
   $("sPlayers").textContent=Object.keys(players).length;$("sPassed").textContent=ranked.length;
   $("sSubs").textContent=Object.values(players).reduce((s,p)=>s+((p&&p.submitSeq)||0),0);
 }
@@ -475,9 +521,15 @@ document.querySelectorAll("[data-tab]").forEach(b=>b.onclick=()=>{
 });
 $("copyLink").onclick=()=>{const u=joinUrl(code);
   navigator.clipboard.writeText(u).then(()=>toast("링크를 복사했어요"),()=>{const s=getSelection(),r=document.createRange();r.selectNodeContents($("joinLink"));s.removeAllRanges();s.addRange(r);toast("링크를 선택했어요. 길게 눌러 복사하세요")})};
+$("startBtn").onclick=async()=>{
+  $("startBtn").disabled=true;
+  try{await ref("games/"+code).update({status:"playing",startedAt:TS()});toast("게임을 시작했어요!")}
+  catch(e){console.error(e);toast("시작하지 못했어요. 다시 눌러 주세요.")}
+  $("startBtn").disabled=false;
+};
 $("resetBtn").onclick=()=>{$("resetConfirm").hidden=false;$("resetBtn").hidden=true;setTimeout(()=>{$("resetConfirm").hidden=true;$("resetBtn").hidden=false},5000)};
 $("resetConfirm").onclick=async()=>{$("resetConfirm").hidden=true;$("resetBtn").hidden=false;
-  try{await ref("results/"+code).remove();await ref("players/"+code).remove();Object.keys(inflight).forEach(k=>delete inflight[k]);toast("기록을 초기화했어요")}catch(e){toast("초기화하지 못했어요")}};
+  try{await ref("games/"+code).update({status:"waiting",startedAt:null});await ref("results/"+code).remove();await ref("players/"+code).remove();Object.keys(inflight).forEach(k=>delete inflight[k]);toast("기록을 지우고 대기 상태로 돌렸어요")}catch(e){toast("초기화하지 못했어요")}};
 
 function buildEditor(){
   const list=$("qList");if(list.dataset.built)return;list.dataset.built="1";list.textContent="";
@@ -522,6 +574,7 @@ async function saveQuestions(){
 $("saveQs").onclick=saveQuestions;$("saveQs2").onclick=saveQuestions;
 
 /* ---------- boot ---------- */
+if(!window.firebase){$("vLoading").hidden=true;msg("Firebase를 불러오지 못했어요. 인터넷 연결을 확인하고 새로고침해 주세요.");return}
 if(!FIREBASE_CONFIG.apiKey||!FIREBASE_CONFIG.databaseURL){
   show("vLoading");$("vLoading").hidden=true;
   msg("Firebase 설정이 비어 있어요. index.html 위쪽 FIREBASE_CONFIG에 내 프로젝트 설정을 붙여 넣어 주세요. (README 참고)");

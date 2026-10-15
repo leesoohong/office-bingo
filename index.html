@@ -294,11 +294,11 @@ const SAMPLE = [
   {cat:"스포츠", type:"mc", q:"골프에서 한 홀의 기준 타수(파)보다 2타 적게 친 것을 뭐라고 할까?", options:["버디","이글","알바트로스","보기"], a:1},
   {cat:"경제", type:"ox", q:"스태그플레이션은 경기 침체와 물가 상승이 동시에 나타나는 현상이다.", a:"O"},
   {cat:"상식", type:"ox", q:"훈민정음 해례본은 유네스코 세계기록유산에 등재되어 있다.", a:"O"},
-  {cat:"시사", type:"mc", q:"2026년 동계올림픽(밀라노·코르티나담페초)이 열린 나라는?", options:["프랑스","이탈리아","스위스","노르웨이"], a:1},
+  {cat:"시사", type:"mc", q:"2024년 노벨문학상 수상자 한강의 작품이 아닌 것은?", options:["소년이 온다","작별하지 않는다","흰","저주토끼"], a:3},
   {cat:"과학", type:"mc", q:"태양을 떠난 빛이 지구에 도착하는 데 걸리는 시간은 약 얼마일까?", options:["약 1분","약 8분","약 30분","약 1시간"], a:1},
   {cat:"상식", type:"mc", q:"러시아 다음으로 국토 면적이 넓은 나라는?", options:["미국","중국","캐나다","브라질"], a:2},
-  {cat:"역사", type:"mc", q:"태조 이성계가 조선을 건국한 해는?", options:["1392년","1418년","1443년","1592년"], a:0},
-  {cat:"스포츠", type:"mc", q:"야구의 '사이클링 히트'를 이루는 기록이 아닌 것은?", options:["단타","2루타","3루타","볼넷"], a:3}
+  {cat:"역사", type:"mc", q:"다음 중 가장 먼저 일어난 사건은?", options:["갑신정변","임오군란","동학농민운동","을미사변"], a:1},
+  {cat:"스포츠", type:"mc", q:"미국 프로농구(NBA)에서 한 번 공격할 때 주어지는 제한 시간(샷 클락)은?", options:["14초","24초","30초","35초"], a:1}
 ];
 
 (() => {
@@ -439,10 +439,10 @@ function renderResult(pending){
   if(!r||!r.lastSeq){box.hidden=true;return}
   box.hidden=false;const big=document.createElement("big");box.append(big);
   if(r.passed){const rank=rankedPassed().findIndex(([id])=>id===uid)+1;box.classList.add("ok");
-    big.textContent=rank?`통과! ${rank}등`:"통과!";box.append(`빙고 ${r.lines}줄`+(r.wrong>0?` · 오답 ${r.wrong}개`:" · 전부 정답")+" · ");const el=elapsedOf(r);box.append(`${r.attempts}번째 제출에서 성공했어요`+(el!==null?` · ${fmtElapsed(el)} 걸렸어요`:""))}
+    big.textContent=rank?`통과! ${rank}등`:"통과!";box.append((r.wrong>0?`오답 ${r.wrong}개`:"전부 정답")+" · ");const el=elapsedOf(r);box.append(`${r.attempts}번째 제출에서 성공했어요`+(el!==null?` · ${fmtElapsed(el)} 걸렸어요`:""))}
   else{box.classList.add("bad");
-    big.textContent=`${r.wrong}개 틀렸어요 · 현재 ${r.lines||0}빙고`;
-    box.append(`맞힌 칸만 빙고로 쳐요. 3빙고가 되려면 ${3-(r.lines||0)}줄 더 필요해요. 틀린 칸을 찾아 고치거나 다른 칸을 더 풀고 다시 제출하세요.`)}
+    big.textContent=`${r.wrong}개 틀렸어요`;
+    box.append("맞힌 칸으로 3빙고가 되어야 통과예요. 틀린 칸을 찾아 고치거나 다른 칸을 더 풀고 다시 제출하세요.")}
 }
 function openSheet(i){
   const q=game.questions[i];sheetIdx=i;

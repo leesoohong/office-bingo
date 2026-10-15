@@ -55,12 +55,12 @@ input,select,textarea{font:inherit;color:var(--ink);background:var(--bg);border:
 .cell .head{display:flex;justify-content:space-between;align-items:center;gap:4px}
 .cell .n{font-family:var(--f-display);font-size:18px;line-height:1}
 .cell .t{font-size:10px;padding:1px 5px;border-radius:99px;border:1px solid var(--line);color:var(--muted);white-space:nowrap}
-.cell .q{font-size:11.5px;line-height:1.35;display:-webkit-box;-webkit-line-clamp:4;-webkit-box-orient:vertical;overflow:hidden;word-break:keep-all;overflow-wrap:anywhere}
-.cell .a{margin-top:auto;font-family:var(--f-display);font-size:15px;line-height:1}
+.cell .q{flex:1;display:grid;place-items:center;text-align:center;font-family:var(--f-display);font-size:19px;line-height:1.15;word-break:keep-all;overflow-wrap:anywhere}
+.cell .a{font-family:var(--f-display);font-size:14px;line-height:1;text-align:center}
 .cell.done{background:var(--tomato);border-color:var(--tomato);color:#fff}
 .cell.done .t{color:#fff;border-color:rgba(255,255,255,.6)}
 .cell.inline{box-shadow:0 0 0 3px var(--mustard)}
-@media (min-width:560px){.cell{min-height:120px;padding:8px}.cell .q{font-size:13px}}
+@media (min-width:560px){.cell{min-height:120px;padding:8px}.cell .q{font-size:23px}}
 .meter{display:flex;align-items:center;justify-content:space-between;gap:8px;flex-wrap:wrap}
 .pips{display:flex;gap:6px}
 .pip{width:26px;height:26px;border-radius:50%;border:2px solid var(--tomato);display:grid;place-items:center;font-family:var(--f-display);color:var(--tomato)}
@@ -163,7 +163,7 @@ button.big{padding:14px 22px;font-size:17px}
       <input id="nameInput" maxlength="16" placeholder="예: 마케팅팀 김지수" autocomplete="off" style="flex:1;min-width:0">
       <button class="primary" type="submit">입장</button>
     </form>
-    <div class="muted small">규칙: 칸을 눌러 문제를 풀고, 푼 칸으로 빙고 3줄을 만들면 제출할 수 있어요. 푼 문제가 모두 맞아야 통과예요.</div>
+    <div class="muted small">규칙: 칸을 눌러 문제를 풀고, 빙고 3줄을 만들면 제출할 수 있어요. 맞힌 칸으로 3빙고가 되면 통과예요. (다른 칸이 틀려도 괜찮아요)</div>
   </section>
 
   <!-- waiting room -->
@@ -230,7 +230,8 @@ button.big{padding:14px 22px;font-size:17px}
       <div class="row" style="justify-content:space-between"><h2>문제 16개</h2><button id="saveQs" class="primary">저장</button></div>
       <label class="muted small" for="titleInput">게임 제목</label>
       <input id="titleInput" maxlength="40">
-      <div class="muted small">빙고판 칸 순서대로 1~16번이에요. (1~4번이 첫 줄)</div>
+      <div class="row" style="justify-content:space-between"><div class="muted small">빙고판 칸 순서대로 1~16번이에요. (1~4번이 첫 줄) 분야는 빙고판에 보이고, 문제는 칸을 눌러야 보여요.</div>
+      <button id="loadSample" class="ghost">추천 문제로 채우기</button></div>
       <div id="qList" style="display:grid;gap:10px"></div>
       <div class="row" style="justify-content:flex-end"><button id="saveQs2" class="primary">저장</button></div>
     </div>
@@ -282,22 +283,22 @@ const ROOT = "bingo"; // DB 안에서 이 앱이 쓰는 최상위 경로
 
 /* 새 게임을 만들 때 기본으로 들어가는 예시 문제 (진행자 화면 '문제 편집'에서 바꿀 수 있어요) */
 const SAMPLE = [
-  {type:"ox", q:"성인의 뼈는 206개다.", a:"O"},
-  {type:"mc", q:"남한에서 가장 높은 산은?", options:["한라산","지리산","설악산","오대산"], a:0},
-  {type:"ox", q:"문어의 심장은 3개다.", a:"O"},
-  {type:"mc", q:"축구 경기에서 한 팀이 경기장에 내보내는 선수 수는?", options:["9명","10명","11명","12명"], a:2},
-  {type:"ox", q:"바나나는 나무가 아니라 풀에서 열린다.", a:"O"},
-  {type:"mc", q:"태양계에서 가장 큰 행성은?", options:["토성","목성","해왕성","천왕성"], a:1},
-  {type:"ox", q:"한글을 창제한 왕은 세조이다.", a:"X"},
-  {type:"mc", q:"1년 중 낮이 가장 긴 절기는?", options:["춘분","하지","추분","동지"], a:1},
-  {type:"ox", q:"펭귄은 북극에 산다.", a:"X"},
-  {type:"mc", q:"무지개 일곱 색 중 네 번째 색은?", options:["노랑","초록","파랑","주황"], a:1},
-  {type:"ox", q:"물은 해수면 기준 100℃에서 끓는다.", a:"O"},
-  {type:"mc", q:"올림픽 오륜기의 고리는 몇 개?", options:["4개","5개","6개","7개"], a:1},
-  {type:"ox", q:"고래는 물고기(어류)다.", a:"X"},
-  {type:"mc", q:"대한민국의 나라꽃은?", options:["진달래","무궁화","개나리","벚꽃"], a:1},
-  {type:"ox", q:"1년(365일)은 52주보다 길다.", a:"O"},
-  {type:"mc", q:"다음 중 포유류가 아닌 것은?", options:["박쥐","돌고래","오리너구리","상어"], a:3}
+  {cat:"시사", type:"mc", q:"2026 북중미 월드컵부터 본선에 참가하는 나라는 몇 개국일까?", options:["32개국","40개국","48개국","64개국"], a:2},
+  {cat:"과학", type:"mc", q:"원소 기호 'K'가 나타내는 원소는?", options:["칼슘","칼륨","크립톤","코발트"], a:1},
+  {cat:"스포츠", type:"ox", q:"축구에서 스로인으로 받은 공에도 오프사이드 반칙이 적용된다.", a:"X"},
+  {cat:"경제", type:"mc", q:"한국은행 기준금리를 결정하는 기구는?", options:["기획재정부","금융위원회","금융통화위원회","국회 기획재정위원회"], a:2},
+  {cat:"상식", type:"mc", q:"현재 대한민국 국회의원 정원(지역구+비례대표)은 몇 명일까?", options:["250명","299명","300명","350명"], a:2},
+  {cat:"역사", type:"ox", q:"임진왜란 때 한산도 대첩을 승리로 이끈 장수는 권율이다.", a:"X"},
+  {cat:"시사", type:"mc", q:"2025년 APEC 정상회의가 열린 한국의 도시는?", options:["부산","경주","인천","제주"], a:1},
+  {cat:"과학", type:"ox", q:"태양계에서 표면 온도가 가장 높은 행성은 수성이 아니라 금성이다.", a:"O"},
+  {cat:"스포츠", type:"mc", q:"골프에서 한 홀의 기준 타수(파)보다 2타 적게 친 것을 뭐라고 할까?", options:["버디","이글","알바트로스","보기"], a:1},
+  {cat:"경제", type:"ox", q:"스태그플레이션은 경기 침체와 물가 상승이 동시에 나타나는 현상이다.", a:"O"},
+  {cat:"상식", type:"ox", q:"훈민정음 해례본은 유네스코 세계기록유산에 등재되어 있다.", a:"O"},
+  {cat:"시사", type:"mc", q:"2026년 동계올림픽(밀라노·코르티나담페초)이 열린 나라는?", options:["프랑스","이탈리아","스위스","노르웨이"], a:1},
+  {cat:"과학", type:"mc", q:"태양을 떠난 빛이 지구에 도착하는 데 걸리는 시간은 약 얼마일까?", options:["약 1분","약 8분","약 30분","약 1시간"], a:1},
+  {cat:"상식", type:"mc", q:"러시아 다음으로 국토 면적이 넓은 나라는?", options:["미국","중국","캐나다","브라질"], a:2},
+  {cat:"역사", type:"mc", q:"태조 이성계가 조선을 건국한 해는?", options:["1392년","1418년","1443년","1592년"], a:0},
+  {cat:"스포츠", type:"mc", q:"야구의 '사이클링 히트'를 이루는 기록이 아닌 것은?", options:["단타","2루타","3루타","볼넷"], a:3}
 ];
 
 (() => {
@@ -349,7 +350,7 @@ $("createBtn").onclick=async()=>{
     for(let t=0;t<8&&!made;t++){
       const c=String(Math.floor(1000+Math.random()*9000));
       const r=await ref("games/"+c).transaction(cur=>cur===null?{owner:uid,title:"야유회 퀴즈 빙고",status:"waiting",createdAt:Date.now(),
-        questions:SAMPLE.map(({type,q,options})=>type==="mc"?{type,q,options}:{type,q})}:undefined);
+        questions:SAMPLE.map(({cat,type,q,options})=>type==="mc"?{cat,type,q,options}:{cat,type,q})}:undefined);
       if(r.committed)made=c;
     }
     if(!made)throw new Error("no code");
@@ -418,18 +419,18 @@ function renderBoard(){
     const n=document.createElement("span");n.className="n";n.textContent=i+1;
     const t=document.createElement("span");t.className="t";t.textContent=q?(q.type==="ox"?"OX":"객관식"):"";
     head.append(n,t);
-    const qt=document.createElement("div");qt.className="q";qt.textContent=q?q.q:"";
+    const qt=document.createElement("div");qt.className="q";qt.textContent=q?(q.cat||"문제"):"";
     c.append(head,qt);
     if(done){const a=document.createElement("div");a.className="a";
       a.textContent=q.type==="ox"?"✓ "+me.answers[i]:"✓ "+(Number(me.answers[i])+1)+"번";c.append(a)}
-    c.setAttribute("aria-label",`${i+1}번, ${q?q.q:""}${done?", 답함":""}`);
+    c.setAttribute("aria-label",`${i+1}번, ${q?(q.cat||"문제"):""}${done?", 답함":""}`);
     c.onclick=()=>openSheet(i);b.append(c);
   }
   const L=linesOf(me.answers).length;
   document.querySelectorAll(".pip").forEach((p,i)=>p.classList.toggle("on",i<L));
   const pending=me.submitSeq>0&&((results[uid]&&results[uid].lastSeq)||0)<me.submitSeq;
   $("submitBtn").disabled=L<3||locked||pending;
-  $("playHint").textContent=locked?"통과했어요. 순위가 확정됐어요.":L<3?`빙고 ${L}/3줄 · ${3-L}줄 더 만들면 제출할 수 있어요.`:`빙고 ${L}줄 완성! 제출해서 채점받으세요.`;
+  $("playHint").textContent=locked?"통과했어요. 순위가 확정됐어요.":L<3?`빙고 ${L}/3줄 · ${3-L}줄 더 만들면 제출할 수 있어요.`:`빙고 ${L}줄 완성! 제출하면 맞힌 칸 기준으로 채점해요.`;
   renderResult(pending);
 }
 function renderResult(pending){
@@ -438,14 +439,14 @@ function renderResult(pending){
   if(!r||!r.lastSeq){box.hidden=true;return}
   box.hidden=false;const big=document.createElement("big");box.append(big);
   if(r.passed){const rank=rankedPassed().findIndex(([id])=>id===uid)+1;box.classList.add("ok");
-    big.textContent=rank?`통과! ${rank}등`:"통과!";const el=elapsedOf(r);box.append(`${r.attempts}번째 제출에서 성공했어요`+(el!==null?` · ${fmtElapsed(el)} 걸렸어요`:""))}
+    big.textContent=rank?`통과! ${rank}등`:"통과!";box.append(`빙고 ${r.lines}줄`+(r.wrong>0?` · 오답 ${r.wrong}개`:" · 전부 정답")+" · ");const el=elapsedOf(r);box.append(`${r.attempts}번째 제출에서 성공했어요`+(el!==null?` · ${fmtElapsed(el)} 걸렸어요`:""))}
   else{box.classList.add("bad");
-    if(r.wrong>0){big.textContent=`${r.wrong}개 틀렸어요`;box.append("어느 칸인지 찾아서 답을 고친 뒤 다시 제출하세요.")}
-    else{big.textContent="빙고가 부족해요";box.append("푼 칸으로 빙고 3줄을 만들어 주세요.")}}
+    big.textContent=`${r.wrong}개 틀렸어요 · 현재 ${r.lines||0}빙고`;
+    box.append(`맞힌 칸만 빙고로 쳐요. 3빙고가 되려면 ${3-(r.lines||0)}줄 더 필요해요. 틀린 칸을 찾아 고치거나 다른 칸을 더 풀고 다시 제출하세요.`)}
 }
 function openSheet(i){
   const q=game.questions[i];sheetIdx=i;
-  $("sheetMeta").textContent=`${i+1}번 · ${q.type==="ox"?"OX 퀴즈":"객관식"}`;$("sheetQ").textContent=q.q;
+  $("sheetMeta").textContent=`${i+1}번 · ${q.cat?q.cat+" · ":""}${q.type==="ox"?"OX 퀴즈":"객관식"}`;$("sheetQ").textContent=q.q;
   const box=$("sheetOpts");box.textContent="";box.className="opts"+(q.type==="ox"?" ox":"");
   const opts=q.type==="ox"?["O","X"]:(q.options||[]);
   opts.forEach((o,k)=>{if(q.type!=="ox"&&!o)return;const v=q.type==="ox"?o:k;
@@ -480,9 +481,9 @@ function gradeAll(){
   for(const [id,p] of Object.entries(players)){
     const r=results[id],seq=(p&&p.submitSeq)||0;
     if(!seq||(r&&r.passed)||(r&&r.lastSeq>=seq)||inflight[id]===seq)continue;
-    inflight[id]=seq;const ans=fromDb(p.answers);let wrong=0;
-    for(const k of Object.keys(ans))if(String(ans[k])!==String(answersKey[k]))wrong++;
-    const L=linesOf(ans).length,passed=wrong===0&&L>=3;
+    inflight[id]=seq;const ans=fromDb(p.answers);let wrong=0;const right={};
+    for(const k of Object.keys(ans)){if(String(ans[k])===String(answersKey[k]))right[k]=1;else wrong++}
+    const L=linesOf(right).length,passed=L>=3;
     ref("results/"+code+"/"+id).set({name:String(p.name||"").slice(0,16),lastSeq:seq,attempts:seq,wrong,lines:L,passed,passedAt:passed?TS():0})
       .catch(e=>{console.error(e);delete inflight[id]});
   }
@@ -502,7 +503,7 @@ function renderHost(){
     const pending=(p.submitSeq||0)>((r&&r.lastSeq)||0);
     if(st()!=="playing"){chip.className="chip";chip.textContent="대기 중"}
     else if(pending){chip.className="chip wait";chip.textContent="채점 중"}
-    else if(r&&r.lastSeq){chip.className="chip bad";chip.textContent=r.wrong>0?`${r.wrong}개 오답`:"빙고 부족"}
+    else if(r&&r.lastSeq){chip.className="chip bad";chip.textContent=`${r.lines||0}빙고 · 오답 ${r.wrong}`}
     else{chip.className="chip";chip.textContent="풀이 중"}
     d.append(chip);tr.append(td(p.name||"이름 없음"),td(Object.keys(ans).length+"/16","mono"),td(linesOf(ans).length+"줄","mono"),d);pb.append(tr);
   }
@@ -539,11 +540,12 @@ function buildEditor(){
     const w=document.createElement("div");w.className="qedit";
     w.innerHTML=`<div class="head"><span class="num">${i+1}</span>
       <select id="qt${i}" aria-label="${i+1}번 유형"><option value="ox">OX 퀴즈</option><option value="mc">객관식</option></select>
+      <input id="qc${i}" maxlength="8" placeholder="분야" aria-label="${i+1}번 분야" style="width:96px">
       <select id="qa${i}" aria-label="${i+1}번 정답" style="margin-left:auto"></select></div>
       <textarea id="qq${i}" rows="2" maxlength="200" placeholder="문제를 입력하세요" aria-label="${i+1}번 문제"></textarea>
       <div class="optgrid" id="qo${i}">${[0,1,2,3].map(k=>`<input id="qo${i}_${k}" maxlength="60" placeholder="보기 ${k+1}" aria-label="${i+1}번 보기 ${k+1}">`).join("")}</div>`;
     list.append(w);
-    $("qt"+i).value=q.type==="mc"?"mc":"ox";$("qq"+i).value=q.q||"";
+    $("qt"+i).value=q.type==="mc"?"mc":"ox";$("qq"+i).value=q.q||"";$("qc"+i).value=q.cat||"";
     [0,1,2,3].forEach(k=>$(`qo${i}_${k}`).value=(q.options||[])[k]||"");
     const sync=()=>{const t=$("qt"+i).value;$("qo"+i).hidden=t!=="mc";const sel=$("qa"+i),prev=sel.value;sel.textContent="";
       (t==="ox"?[["O","정답 O"],["X","정답 X"]]:[0,1,2,3].map(k=>[String(k),`정답 ${k+1}번`])).forEach(([v,l])=>{const o=document.createElement("option");o.value=v;o.textContent=l;sel.append(o)});
@@ -555,13 +557,13 @@ function buildEditor(){
 async function saveQuestions(){
   const qs=[],ans=[];
   for(let i=0;i<16;i++){
-    const type=$("qt"+i).value,q=$("qq"+i).value.trim();
+    const type=$("qt"+i).value,q=$("qq"+i).value.trim(),cat=$("qc"+i).value.trim()||"문제";
     if(!q){toast(`${i+1}번 문제가 비어 있어요`);$("qq"+i).focus();return}
-    if(type==="ox"){qs.push({type,q});ans.push($("qa"+i).value)}
+    if(type==="ox"){qs.push({cat,type,q});ans.push($("qa"+i).value)}
     else{const options=[0,1,2,3].map(k=>$(`qo${i}_${k}`).value.trim()),a=Number($("qa"+i).value);
       if(options.filter(Boolean).length<2){toast(`${i+1}번 보기를 2개 이상 입력하세요`);return}
       if(!options[a]){toast(`${i+1}번 정답 보기가 비어 있어요`);return}
-      qs.push({type,q,options});ans.push(a)}
+      qs.push({cat,type,q,options});ans.push(a)}
   }
   const title=$("titleInput").value.trim()||"야유회 퀴즈 빙고";
   try{
@@ -571,6 +573,11 @@ async function saveQuestions(){
     toast("문제를 저장했어요");
   }catch(e){console.error(e);toast("저장하지 못했어요. 다시 시도해 주세요.")}
 }
+$("loadSample").onclick=()=>{
+  SAMPLE.forEach((x,i)=>{$("qt"+i).value=x.type;$("qt"+i).onchange();$("qq"+i).value=x.q;$("qc"+i).value=x.cat;
+    [0,1,2,3].forEach(k=>$(`qo${i}_${k}`).value=(x.options||[])[k]||"");$("qa"+i).value=String(x.a)});
+  toast("추천 문제를 채웠어요. 저장을 눌러야 반영돼요");
+};
 $("saveQs").onclick=saveQuestions;$("saveQs2").onclick=saveQuestions;
 
 /* ---------- boot ---------- */
